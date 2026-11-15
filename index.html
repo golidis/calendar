@@ -1,0 +1,177 @@
+<!DOCTYPE html><html lang="pt-BR"><head><meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Criador de Calendários – SENAI</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+<style>
+:root{--bg:#f1f5f9;--cd:#fff;--tx:#1e293b;--mu:#64748b;--bd:#e2e8f0;--ac:#2563eb;--wk:#f1f5f9;box-sizing:border-box;padding-top:env(safe-area-inset-top,0px);padding-bottom:env(safe-area-inset-bottom,0px)}
+@media(prefers-color-scheme:dark){:root:not([data-theme=light]){--bg:#0f172a;--cd:#1e293b;--tx:#e2e8f0;--mu:#94a3b8;--bd:#334155;--ac:#60a5fa;--wk:#273449}}
+:root[data-theme=dark]{--bg:#0f172a;--cd:#1e293b;--tx:#e2e8f0;--mu:#94a3b8;--bd:#334155;--ac:#60a5fa;--wk:#273449}
+html{scroll-padding-top:env(safe-area-inset-top,0px)}
+body{margin:0;background:var(--bg);color:var(--tx);font:14px system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+[hidden]{display:none!important}.pr{display:none}
+#toast{position:fixed;left:50%;bottom:calc(20px + env(safe-area-inset-bottom,0px));transform:translateX(-50%);background:#1e293b;color:#fff;padding:10px 16px;border-radius:8px;z-index:50;max-width:90%}
+.wrap{max-width:1400px;margin:auto;padding:14px}
+.card{background:var(--cd);border:1px solid var(--bd);border-radius:12px;padding:14px;margin-bottom:14px}
+h1{font-size:20px;margin:0}h2{font-size:15px;margin:0 0 10px;display:flex;justify-content:space-between;align-items:center;gap:8px}h3{font-size:14px;margin:0 0 6px;text-align:center}
+.top{display:flex;flex-wrap:wrap;justify-content:space-between;align-items:center;gap:10px}
+.cols{display:grid;grid-template-columns:390px 1fr;gap:14px;align-items:start}
+@media(max-width:900px){.cols{grid-template-columns:1fr}}
+label{display:block;font-size:10px;font-weight:700;color:var(--mu);text-transform:uppercase;margin-bottom:8px}
+input,select,textarea{width:100%;box-sizing:border-box;margin-top:3px;padding:7px;border:1px solid var(--bd);border-radius:7px;background:var(--cd);color:var(--tx);font:inherit;font-size:13px;text-transform:none;font-weight:400}
+input[type=checkbox]{width:auto;margin:0 6px 0 0}input[type=color]{padding:2px;height:34px}
+button{cursor:pointer;border:1px solid var(--bd);background:var(--cd);color:var(--tx);border-radius:7px;padding:7px 11px;font:inherit;font-size:13px;font-weight:600}
+button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(--ac);color:#fff}
+.ib{padding:2px 6px;font-size:12px;margin-left:2px}.bar{display:flex;flex-wrap:wrap;gap:6px}
+.g2,.g3{display:grid;gap:8px}.g2{grid-template-columns:1fr 1fr}.g3{grid-template-columns:1fr 1fr 1fr}
+.chip{display:inline-flex;gap:5px;align-items:center;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:3px 8px;margin:0 4px 4px 0;font-size:12px;font-weight:600}
+.chip button{border:0;padding:0;background:none;font-size:15px}
+.hl{max-height:200px;overflow:auto;font-size:12px}.hl div{display:flex;justify-content:space-between;gap:6px;padding:3px 6px;margin-bottom:3px;border-radius:5px;color:#1e293b}
+.hl .feriado{background:#fee2e2}.hl .ferias{background:#fef3c7}.hl button{border:0;background:none;padding:0 4px}
+.dys{display:flex;gap:2px;margin:3px 0 8px}.dys label{flex:1;margin:0}.dys input{display:none}
+.dys span{display:block;text-align:center;font-size:10px;font-weight:700;padding:6px 0;border:1px solid var(--bd);border-radius:4px;cursor:pointer;color:var(--mu)}
+.dys input:checked+span{background:var(--ac);color:#fff;border-color:var(--ac)}
+.phr{border:1px dashed var(--bd);border-radius:8px;padding:6px;margin-bottom:6px}
+.uc{border:1px solid var(--bd);border-radius:8px;padding:8px 8px 8px 10px;margin-top:8px}.uc .r{display:flex;justify-content:space-between;gap:6px}
+.uc small{display:block;color:var(--mu);margin-top:2px}.dt{background:var(--bg);border-radius:6px;padding:4px 8px;margin-top:5px;font-size:12px;display:flex;justify-content:space-between}
+.er{color:#dc2626;font-size:12px;font-weight:600;margin-top:4px}.mu{color:var(--mu)}
+.badge{font-size:12px;background:var(--bg);border:1px solid var(--bd);border-radius:6px;padding:2px 8px;font-weight:600}
+.months{display:grid;grid-template-columns:repeat(auto-fill,minmax(230px,1fr));gap:14px}
+.mo{border:1px solid var(--bd);border-radius:10px;padding:10px}.mg{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.hd{font-size:10px;font-weight:700;text-align:center;color:var(--mu);font-style:normal}
+.dc{aspect-ratio:1;display:flex;align-items:center;justify-content:center;font-size:12px;border:1px solid var(--bd);border-radius:4px}
+.dc.wk{background:var(--wk);color:var(--mu)}.dc.fd{background:#fee2e2;color:#dc2626;border-color:#fca5a5;font-weight:700}
+.dc.fe{background:#fef3c7;color:#b45309;border-color:#fde68a;font-weight:700}.dc.cls{color:#1e293b;font-weight:700;border-color:rgba(0,0,0,.15)}
+.isum{display:grid;grid-template-columns:repeat(auto-fill,minmax(300px,1fr));gap:12px}
+.ic{border:1px solid var(--bd);border-radius:8px;overflow:hidden}.ic>b{display:flex;justify-content:space-between;padding:6px 10px;background:var(--bg)}
+.ic div{padding:6px 10px;border-top:1px solid var(--bd);font-size:12px}.ic div span{display:flex;justify-content:space-between;color:var(--mu)}
+@media print{:root:root:root{--bg:#fff;--cd:#fff;--tx:#1e293b;--mu:#64748b;--bd:#cbd5e1;--wk:#f1f5f9}
+.np{display:none!important}.pr{display:block!important;border-bottom:2px solid #1e293b;margin-bottom:12px;padding-bottom:8px}
+.cols{display:block}.card{border:0;padding:0}.mo,.ic{break-inside:avoid}.months{grid-template-columns:1fr 1fr}.isum{grid-template-columns:1fr}
+*{-webkit-print-color-adjust:exact;print-color-adjust:exact}@page{margin:1cm}}
+</style></head><body><div id="toast" hidden></div><div class="wrap">
+<header class="card top np"><h1>📅 Criador de Calendários – SENAI</h1><div class="bar">
+<button onclick="ask(this,newDoc)">Novo</button><input type="file" id="fu" accept=".xlsx" hidden onchange="imp(event)">
+<button onclick="$('fu').click()">Abrir Excel</button><button onclick="exp()">Salvar Excel</button><button onclick="pdf()">Exportar PDF</button></div></header>
+<div class="cols"><aside class="np">
+<div class="card"><h2>Curso</h2>
+<label>Nome do curso<input id="cn" placeholder="Ex: Eletrotécnica"></label>
+<div class="g2"><label>Carga prevista (h)<input id="ch" type="number"></label><label>Data de início do curso<input id="start" type="date" onchange="refresh()"></label></div>
+<div class="g2"><label>Manhã (h/dia)<input id="mm" type="number" value="4" onchange="mM=+this.value||0;refresh()"></label><label>Tarde (h/dia)<input id="ma" type="number" value="4" onchange="mA=+this.value||0;refresh()"></label></div></div>
+<div class="card"><h2>Instrutores</h2><div class="g2" style="grid-template-columns:1fr auto"><input id="in" placeholder="Nome do instrutor"><button class="pri" onclick="addI()">Adicionar</button></div><div id="il" style="margin-top:8px"></div></div>
+<div class="card"><h2>Feriados e férias</h2>
+<div class="g2"><label>Tipo<select id="ht"><option value="feriado">Feriado</option><option value="ferias">Férias</option></select></label><label>Nome<input id="hn" placeholder="Ex: Férias de julho"></label></div>
+<div class="g2"><label>De<input id="hs" type="date"></label><label>Até (opcional)<input id="he" type="date"></label></div>
+<button onclick="addH()" style="width:100%;margin-bottom:8px">Adicionar data/período</button><div id="hl" class="hl"></div></div>
+<div class="card"><h2>Unidades curriculares <span class="badge" id="tot"></span></h2>
+<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600">Colar o plano de curso (nome + horas)</summary>
+<textarea id="bt" rows="5" placeholder="Uma UC por linha, ex.:&#10;Eletricidade Básica; 80&#10;Segurança do Trabalho 40"></textarea>
+<small class="mu">Usa turno, carga diária, dias e instrutor do formulário abaixo, na ordem da lista.</small>
+<button class="pri" onclick="bulkAdd()" style="width:100%;margin-top:6px">Adicionar todas</button></details>
+<div id="form"><label>Nome da UC<input id="un"></label>
+<div class="g3"><label>Total (h)<input id="ut" type="number"></label><label>Diária (h)<input id="ud" type="number" value="4"></label><label>Turno<select id="us"><option>Manhã</option><option>Tarde</option><option>Integral</option></select></label></div>
+<label style="margin:0">Dias da semana</label><div id="dmain"></div>
+<div class="g2"><label>Início desta UC<select id="mode" onchange="$('fixw').hidden=this.value!='fix'"><option value="seq">Logo após a anterior</option><option value="par">Junto com a anterior</option><option value="fix">Data fixa</option></select></label>
+<label id="fixw" hidden>Data fixa<input id="fix" type="date"></label></div>
+<label style="display:flex;justify-content:space-between;align-items:center">Mudar dias a partir de uma data<button class="ib" onclick="addPh()">+ Fase</button></label><div id="ph"></div>
+<div class="g2" style="grid-template-columns:1fr 70px"><label>Instrutor<select id="up"></select></label><label>Cor<input id="uk" type="color"></label></div>
+<label style="display:flex;align-items:center;text-transform:none;font-size:12px"><input id="ui" type="checkbox">Ignorar férias (prática profissional)</label>
+<div class="bar"><button id="sv" class="pri" style="flex:1" onclick="saveUC()">Adicionar UC</button><button id="cx" hidden onclick="resetForm()">Cancelar</button></div></div>
+<div id="ul"></div></div></aside>
+<main><div class="pr"><h1 id="pt"></h1><p id="pp" class="mu"></p></div>
+<div class="card"><h2>Calendário de execução <span class="badge" id="sum"></span></h2><div id="cal" class="months"></div></div>
+<div class="card"><h2>Alocação por instrutor</h2><div id="isum" class="isum"></div></div></main></div></div>
+<script>
+const $=id=>document.getElementById(id);
+window.alert=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(window._t);window._t=setTimeout(()=>t.hidden=true,4500)};
+function ask(b,f){if(b.dataset.o){clearTimeout(b._t);b.textContent=b.dataset.o;delete b.dataset.o;f()}else{b.dataset.o=b.textContent;b.textContent='Confirmar?';b._t=setTimeout(()=>{b.textContent=b.dataset.o;delete b.dataset.o},3500)}}
+const DN=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'],ORD=[1,2,3,4,5,6,0],MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],SO={'Manhã':1,'Integral':2,'Tarde':3};
+let ins=[],ucs=[],hol=new Map(),sch={},edit=null,mM=4,mA=4,gen=new Set(),noGen=false,nid=1;
+const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
+const ts=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
+const br=s=>s?s.split('-').reverse().join('/'):'--';
+const esc=s=>String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const rc=()=>'#'+[0,0,0].map(()=>(155+Math.random()*100|0).toString(16)).join('');
+function easter(y){const a=y%19,b=Math.floor(y/100),c=y%100,d=Math.floor(b/4),e=b%4,f=Math.floor((b+8)/25),g=Math.floor((b-f+1)/3),h=(19*a+b-d-g+15)%30,i=Math.floor(c/4),k=c%4,l=(32+2*e+2*i-h-k)%7,m=Math.floor((a+11*h+22*l)/451);return new Date(y,Math.floor((h+l-7*m+114)/31)-1,(h+l-7*m+114)%31+1)}
+function addDef(y){if(noGen||gen.has(y))return;gen.add(y);const E=easter(y),sh=n=>{const d=new Date(E);d.setDate(d.getDate()+n);return ts(d)};
+[[y+'-01-01','Ano Novo'],[sh(-48),'Carnaval'],[sh(-47),'Carnaval'],[sh(-2),'Paixão de Cristo'],[y+'-04-21','Tiradentes'],[y+'-05-01','Dia do Trabalho'],[sh(60),'Corpus Christi'],[y+'-08-05','Aniversário de Rio Verde'],[y+'-09-07','Independência do Brasil'],[y+'-10-12','Nossa Sra. Aparecida'],[y+'-11-02','Finados'],[y+'-11-15','Proclamação da República'],[y+'-11-20','Consciência Negra'],[y+'-12-25','Natal']].forEach(([d,n])=>{if(!hol.has(d))hol.set(d,{n,t:'feriado'})})}
+const dayHtml=sel=>'<div class="dys">'+ORD.map(d=>`<label><input type="checkbox" value="${d}" ${sel.includes(d)?'checked':''}><span>${DN[d]}</span></label>`).join('')+'</div>';
+const getDays=el=>[...el.querySelectorAll('input:checked')].map(x=>+x.value);
+function calc(){sch={};let tot=0,pS=null,pE=null;const st=$('start').value;
+ucs.forEach(u=>{u.s=u.e=null;u.err='';tot+=u.total;
+const from=u.mode==='fix'?u.fix:u.mode==='par'?(pS||st):(pE||st);
+if(!from){u.err='Informe a data de início do curso.';return}
+let left=u.total,cur=pd(from),n=0;const phs=u.ph.filter(p=>p.d).sort((a,b)=>a.d.localeCompare(b.d));
+while(left>0&&n++<4000){const ds=ts(cur),dw=cur.getDay();addDef(cur.getFullYear());
+let days=u.days;for(const p of phs)if(ds>=p.d)days=p.days;
+const h=hol.get(ds);
+if(days.includes(dw)&&!(h&&(h.t==='feriado'||!u.ign))){const s=sch[ds]||(sch[ds]={m:0,a:0,u:[]});let c=0;const fm=mM-s.m,fa=mA-s.a;
+if(u.shift==='Manhã'){c=Math.min(u.daily,fm,left);s.m+=c}
+else if(u.shift==='Tarde'){c=Math.min(u.daily,fa,left);s.a+=c}
+else{c=Math.min(u.daily,fm+fa,left);const tm=Math.min(c,fm);s.m+=tm;s.a+=c-tm}
+if(c>0){s.u.push({n:u.name,h:c,c:u.color,sh:u.shift});left-=c;u.s=u.s||ds;u.e=ds}}
+cur.setDate(cur.getDate()+1)}
+if(left>0)u.err='Não coube: verifique dias da semana e capacidade diária.';
+if(u.s){pS=u.s;pE=u.e}});return tot}
+function refresh(){const t=calc();$('tot').textContent=t+'h alocadas';rUC();rCal();rSum()}
+function month(y,m){let c=['D','S','T','Q','Q','S','S'].map(x=>`<i class="hd">${x}</i>`).join('')+'<i></i>'.repeat(new Date(y,m,1).getDay());
+for(let d=1,n=new Date(y,m+1,0).getDate();d<=n;d++){const ds=ts(new Date(y,m,d)),dw=new Date(y,m,d).getDay(),H=hol.get(ds),S=sch[ds];let cl='dc',st='',tt='';
+if(dw%6===0)cl+=' wk';
+if(H){cl+=H.t==='ferias'?' fe':' fd';tt=(H.t==='ferias'?'Férias: ':'Feriado: ')+H.n}
+if(S&&S.u.length){cl+=' cls';const tot=S.u.reduce((s,x)=>s+x.h,0);
+if(S.u.length===1)st='background:'+S.u[0].c;else{let p=0;const g=[...S.u].sort((a,b)=>SO[a.sh]-SO[b.sh]).flatMap(x=>{const q=p+x.h/tot*100,r=[x.c+' '+p+'%',x.c+' '+q+'%'];p=q;return r});st='background:linear-gradient(135deg,'+g.join(',')+')'}
+tt=S.u.map(x=>`${x.n} (${x.h}h, ${x.sh})`).join(' | ')}
+c+=`<div class="${cl}" style="${st}" title="${esc(tt)}">${d}</div>`}
+return `<div class="mo"><h3>${MN[m]} ${y}</h3><div class="mg">${c}</div></div>`}
+function rCal(){let a=null,b=null;ucs.forEach(u=>{if(u.s&&(!a||u.s<a))a=u.s;if(u.e&&(!b||u.e>b))b=u.e});const el=$('cal');
+if(!a){el.innerHTML='<p class="mu">Informe a data de início do curso e adicione as UCs para gerar o calendário.</p>';$('sum').textContent='';return}
+let y=+a.slice(0,4),m=+a.slice(5,7)-1;const ey=+b.slice(0,4),em=+b.slice(5,7)-1;let h='';
+while(y<ey||(y===ey&&m<=em)){h+=month(y,m);if(++m>11){m=0;y++}}
+el.innerHTML=h;const meta=+$('ch').value;$('sum').textContent='Término previsto: '+br(b)+(meta?` · ${ucs.reduce((s,u)=>s+u.total,0)}h de ${meta}h`:'')}
+function rUC(){$('ul').innerHTML=ucs.map((u,i)=>`<div class="uc" style="border-left:6px solid ${u.color}"><div class="r"><b>${esc(u.name)}</b><span><button class="ib" onclick="mv(${i},-1)">▲</button><button class="ib" onclick="mv(${i},1)">▼</button><button class="ib" onclick="ed('${u.id}')">✎</button><button class="ib" onclick="ask(this,()=>rm('${u.id}'))">✕</button></span></div>
+<small>${u.prof?esc(u.prof)+' • ':''}${u.total}h • ${u.daily}h/dia • ${u.shift} • ${u.days.map(d=>DN[d]).join(' ')}${u.mode==='par'?' • junto com a anterior':u.mode==='fix'?' • data fixa':''}${u.ph.length?' • '+u.ph.length+' mudança(s) de dias':''}${u.ign?' • ignora férias':''}</small>
+${u.err?`<div class="er">${u.err}</div>`:''}${u.s?`<div class="dt"><span>Início <b>${br(u.s)}</b></span><span>Fim <b>${br(u.e)}</b></span></div>`:''}</div>`).join('')}
+function rSum(){$('isum').innerHTML=ins.length?ins.map(p=>{const l=ucs.filter(u=>u.prof===p);return `<div class="ic"><b>${esc(p)}<span class="badge">${l.length} UCs</span></b>${l.length?l.map(u=>`<div><span style="color:var(--tx);font-weight:600"><span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${u.color};margin-right:6px"></i>${esc(u.name)}</span><span>${u.total}h</span></span><span><span>${u.s?br(u.s)+' a '+br(u.e):'sem agenda'}</span><span>${u.shift}</span></span></div>`).join(''):'<div class="mu">Sem UCs atribuídas.</div>'}</div>`}).join(''):'<p class="mu">Nenhum instrutor cadastrado.</p>'}
+function addI(){const v=$('in').value.trim();if(v&&!ins.includes(v)){ins.push(v);$('in').value='';rI()}}
+function rmI(i){ins.splice(i,1);rI()}
+function rI(){$('il').innerHTML=ins.map((p,i)=>`<span class="chip">${esc(p)}<button onclick="rmI(${i})">×</button></span>`).join('');const s=$('up'),v=s.value;s.innerHTML='<option value="">Sem instrutor</option>'+ins.map(p=>`<option>${esc(p)}</option>`).join('');if(ins.includes(v))s.value=v;rSum()}
+function addH(){const t=$('ht').value,s=$('hs').value,e=$('he').value,n=$('hn').value.trim()||(t==='feriado'?'Feriado':'Férias');if(!s)return alert('Informe a data inicial.');
+const c=pd(s),f=e?pd(e):pd(s);if(f<c)return alert('Data final inválida.');for(;c<=f;c.setDate(c.getDate()+1))hol.set(ts(c),{n,t});$('hs').value=$('he').value=$('hn').value='';rH();refresh()}
+function rmH(a,b){const c=pd(a),f=pd(b);for(;c<=f;c.setDate(c.getDate()+1))hol.delete(ts(c));rH();refresh()}
+function rH(){const s=[...hol.entries()].sort((a,b)=>a[0].localeCompare(b[0])),g=[];
+s.forEach(([d,o])=>{const l=g[g.length-1];if(l&&l.n===o.n&&l.t===o.t&&(pd(d)-pd(l.e))===86400000)l.e=d;else g.push({s:d,e:d,n:o.n,t:o.t})});
+$('hl').innerHTML=g.map(x=>`<div class="${x.t}"><span><b>${x.t==='feriado'?'FERIADO':'FÉRIAS'}</b> ${br(x.s)}${x.s!==x.e?' a '+br(x.e):''} – ${esc(x.n)}</span><button onclick="rmH('${x.s}','${x.e}')">×</button></div>`).join('')}
+function addPh(d='',days=[1,2,3,4,5]){const r=document.createElement('div');r.className='phr';r.innerHTML=`<div class="g2" style="grid-template-columns:1fr auto"><input type="date" class="pd" value="${d}"><button class="ib" onclick="this.closest('.phr').remove()">×</button></div>`+dayHtml(days);$('ph').appendChild(r)}
+function resetForm(){edit=null;$('un').value=$('ut').value='';$('uk').value=rc();$('ui').checked=false;$('ph').innerHTML='';$('sv').textContent='Adicionar UC';$('cx').hidden=true}
+function saveUC(){const name=$('un').value.trim(),total=+$('ut').value,daily=+$('ud').value,days=getDays($('dmain')),mode=$('mode').value,fix=$('fix').value;
+const ph=[...document.querySelectorAll('#ph .phr')].map(r=>({d:r.querySelector('.pd').value,days:getDays(r)})).filter(p=>p.d&&p.days.length);
+if(!name||!(total>0)||!(daily>0)||!days.length)return alert('Preencha nome, carga total, carga diária e ao menos um dia da semana.');
+if(mode==='fix'&&!fix)return alert('Informe a data fixa de início.');
+const o={name,total,daily,shift:$('us').value,prof:$('up').value,color:$('uk').value,ign:$('ui').checked,days,mode,fix,ph};
+if(edit)Object.assign(ucs.find(u=>u.id===edit),o);else ucs.push({id:'u'+nid++,...o});resetForm();refresh()}
+function ed(id){const u=ucs.find(x=>x.id===id);if(!u)return;edit=id;$('un').value=u.name;$('ut').value=u.total;$('ud').value=u.daily;$('us').value=u.shift;$('up').value=u.prof;$('uk').value=u.color;$('ui').checked=u.ign;
+$('dmain').innerHTML=dayHtml(u.days);$('mode').value=u.mode;$('fix').value=u.fix||'';$('fixw').hidden=u.mode!=='fix';$('ph').innerHTML='';u.ph.forEach(p=>addPh(p.d,p.days));
+$('sv').textContent='Salvar alterações';$('cx').hidden=false;$('form').scrollIntoView({behavior:'smooth',block:'center'})}
+function rm(id){if(edit===id)resetForm();ucs=ucs.filter(u=>u.id!==id);refresh()}
+function mv(i,d){const j=i+d;if(j<0||j>=ucs.length)return;[ucs[i],ucs[j]]=[ucs[j],ucs[i]];refresh()}
+function bulkAdd(){const days=getDays($('dmain')),daily=+$('ud').value;if(!days.length||!(daily>0))return alert('Marque os dias da semana e a carga diária no formulário.');let n=0;
+$('bt').value.split('\n').forEach(l=>{const m=l.trim().match(/^(.+?)[\s;,|:\t–-]+(\d+)\s*(?:h|horas)?$/i);if(m){ucs.push({id:'u'+nid++,name:m[1].trim(),total:+m[2],daily,shift:$('us').value,prof:$('up').value,color:rc(),ign:false,days:[...days],mode:'seq',fix:'',ph:[]});n++}});
+if(!n)return alert('Nenhuma linha reconhecida. Use: nome da UC, separador e horas.');$('bt').value='';refresh()}
+function pdf(){const n=$('cn').value,h=$('ch').value;$('pt').textContent=n?'Cronograma: '+n:'Cronograma do curso';$('pp').textContent=(h?'Carga horária total: '+h+'h · ':'')+'SENAI · Gerado em '+new Date().toLocaleDateString('pt-BR');window.print()}
+function newDoc(){ins=[];ucs=[];hol.clear();gen.clear();noGen=false;mM=mA=4;['cn','ch','start'].forEach(i=>$(i).value='');$('mm').value=$('ma').value=4;for(let y=2026;y<=2032;y++)addDef(y);$('mode').value='seq';$('fixw').hidden=true;resetForm();rI();rH();refresh()}
+function exp(){if(typeof XLSX==='undefined')return alert('A biblioteca de Excel não carregou.');const wb=XLSX.utils.book_new(),A=(n,r)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),n);
+A('Configurações',[{NomeCurso:$('cn').value,CargaTotalPrevista:$('ch').value,DataInicio:$('start').value,MaxManha:mM,MaxTarde:mA}]);
+A('Instrutores',ins.map(Nome=>({Nome})));A('Feriados',[...hol.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([Data,o])=>({Data,Nome:o.n,Tipo:o.t})));
+A('UnidadesCurriculares',ucs.map(u=>({Nome:u.name,CargaTotal:u.total,CargaDiaria:u.daily,Turno:u.shift,Professor:u.prof,Cor:u.color,IgnorarFerias:u.ign?'Sim':'Não',DiasSemana:u.days.join(','),ModoInicio:u.mode,DataFixa:u.fix,Fases:u.ph.map(p=>p.d+':'+p.days.join(',')).join('|')})));
+XLSX.writeFile(wb,'cronograma_curso.xlsx')}
+function imp(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),sj=n=>wb.Sheets[n]?XLSX.utils.sheet_to_json(wb.Sheets[n]):null;
+const c=(sj('Configurações')||[])[0];if(c){$('cn').value=c.NomeCurso||'';$('ch').value=c.CargaTotalPrevista||'';$('start').value=c.DataInicio||'';mM=+c.MaxManha||4;mA=+c.MaxTarde||4;$('mm').value=mM;$('ma').value=mA}
+const I=sj('Instrutores');ins=I?I.map(i=>i.Nome).filter(Boolean):[];
+const H=sj('Feriados');if(H){hol.clear();noGen=true;H.forEach(h=>h.Data&&hol.set(h.Data,{n:h.Nome||'Feriado',t:h.Tipo||'feriado'}))}
+const U=sj('UnidadesCurriculares');if(U)ucs=U.map(u=>{const ph=String(u.Fases||'').split('|').filter(Boolean).map(x=>{const[d,z]=x.split(':');return{d,days:(z||'').split(',').map(Number)}});
+const o={id:'u'+nid++,name:u.Nome,total:+u.CargaTotal,daily:+u.CargaDiaria,shift:u.Turno,prof:u.Professor||'',color:/^#/.test(u.Cor)?u.Cor:rc(),ign:u.IgnorarFerias==='Sim'};
+if(u.ModoInicio){o.mode=u.ModoInicio;o.fix=u.DataFixa||'';o.days=String(u.DiasSemana).split(',').map(Number);o.ph=ph}
+else{const p=ph.shift()||{d:'',days:[1,2,3,4,5]};o.mode='fix';o.fix=p.d;o.days=p.days;o.ph=ph}return o});
+resetForm();rI();rH();refresh();alert('Cronograma importado!')}catch(x){alert('Erro ao ler o arquivo Excel.');console.error(x)}$('fu').value=''};r.readAsArrayBuffer(f)}
+for(let y=2026;y<=2032;y++)addDef(y);
+$('dmain').innerHTML=dayHtml([1,2,3,4,5]);$('uk').value=rc();rI();rH();refresh();
+</script></body></html>
