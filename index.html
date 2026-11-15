@@ -63,7 +63,7 @@ button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(-
 <div class="card"><h2>Curso</h2>
 <label>Nome do curso<input id="cn" placeholder="Ex: Eletrotécnica"></label>
 <div class="g2"><label>Carga prevista (h)<input id="ch" type="number"></label><label>Data de início do curso<input id="start" type="date" onchange="refresh()"></label></div>
-<div class="g2"><label>Manhã (h/dia)<input id="mm" type="number" value="4" onchange="mM=+this.value||0;refresh()"></label><label>Tarde (h/dia)<input id="ma" type="number" value="4" onchange="mA=+this.value||0;refresh()"></label></div></div>
+<div class="g3"><label>Manhã (h/dia)<input id="mm" type="number" value="4" onchange="mM=+this.value||0;refresh()"></label><label>Tarde (h/dia)<input id="ma" type="number" value="4" onchange="mA=+this.value||0;refresh()"></label><label>Noite (h/dia)<input id="mn" type="number" value="4" onchange="mN=+this.value||0;refresh()"></label></div></div>
 <div class="card"><h2>Instrutores</h2><div class="g2" style="grid-template-columns:1fr auto"><input id="in" placeholder="Nome do instrutor"><button class="pri" onclick="addI()">Adicionar</button></div><div id="il" style="margin-top:8px"></div></div>
 <div class="card"><h2>Feriados e férias</h2>
 <div class="g2"><label>Tipo<select id="ht"><option value="feriado">Feriado</option><option value="ferias">Férias</option></select></label><label>Nome<input id="hn" placeholder="Ex: Férias de julho"></label></div>
@@ -72,13 +72,13 @@ button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(-
 <div class="card"><h2>Unidades curriculares <span class="badge" id="tot"></span></h2>
 <details open><summary>Adicionar várias UCs de uma vez</summary><div style="margin-top:8px">
 <label style="margin-bottom:2px">Dias padrão das linhas</label><div id="bdef"></div>
-<div class="g3"><label>Diária (h)<input id="bdl" type="number" value="4"></label><label>Turno<select id="bsh"><option>Manhã</option><option>Tarde</option><option>Integral</option></select></label><label>Instrutor<select id="bdp"></select></label></div>
+<div class="g3"><label>Diária (h)<input id="bdl" type="number" value="4"></label><label>Turno<select id="bsh"><option>Manhã</option><option>Tarde</option><option>Integral</option><option>Noturno</option></select></label><label>Instrutor<select id="bdp"></select></label></div>
 <button style="width:100%;margin-bottom:8px" onclick="bAll()">Aplicar padrão a todas as linhas</button>
 <details style="margin-bottom:8px"><summary>Colar lista (nome + horas)</summary><textarea id="bt" rows="4" placeholder="Eletricidade Básica; 80&#10;Segurança do Trabalho 40"></textarea><button onclick="bPaste()" style="width:100%;margin-top:4px">Gerar linhas</button></details>
 <div id="brows"></div>
 <div class="bar"><button onclick="bRow().querySelector('.bn').focus()">+ Linha</button><button class="pri" style="flex:1" onclick="bAdd()">Adicionar ao calendário</button></div></div></details>
 <details id="fd" style="margin-top:12px"><summary>Adicionar ou editar uma UC (todas as opções)</summary><div id="form" style="margin-top:8px"><label>Nome da UC<input id="un"></label>
-<div class="g3"><label>Total (h)<input id="ut" type="number"></label><label>Diária (h)<input id="ud" type="number" value="4"></label><label>Turno<select id="us"><option>Manhã</option><option>Tarde</option><option>Integral</option></select></label></div>
+<div class="g3"><label>Total (h)<input id="ut" type="number"></label><label>Diária (h)<input id="ud" type="number" value="4"></label><label>Turno<select id="us"><option>Manhã</option><option>Tarde</option><option>Integral</option><option>Noturno</option></select></label></div>
 <label style="margin:0">Dias da semana</label><div id="dmain"></div>
 <div class="g2"><label>Início desta UC<select id="mode" onchange="$('fixw').hidden=this.value!='fix'"><option value="seq">Logo após a anterior</option><option value="par">Junto com a anterior</option><option value="fix">Data fixa</option></select></label>
 <label id="fixw" hidden>Data fixa<input id="fix" type="date"></label></div>
@@ -94,8 +94,8 @@ button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(-
 const $=id=>document.getElementById(id);
 window.alert=m=>{const t=$('toast');t.textContent=m;t.hidden=false;clearTimeout(window._t);window._t=setTimeout(()=>t.hidden=true,4500)};
 function ask(b,f){if(b.dataset.o){clearTimeout(b._t);b.textContent=b.dataset.o;delete b.dataset.o;f()}else{b.dataset.o=b.textContent;b.textContent='Confirmar?';b._t=setTimeout(()=>{b.textContent=b.dataset.o;delete b.dataset.o},3500)}}
-const DN=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'],ORD=[1,2,3,4,5,6,0],MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],SO={'Manhã':1,'Integral':2,'Tarde':3};
-let ins=[],ucs=[],hol=new Map(),sch={},edit=null,mM=4,mA=4,gen=new Set(),noGen=false,nid=1;
+const DN=['DOM','SEG','TER','QUA','QUI','SEX','SÁB'],ORD=[1,2,3,4,5,6,0],MN=['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'],SO={'Manhã':1,'Integral':2,'Tarde':3,'Noturno':4};
+let ins=[],ucs=[],hol=new Map(),sch={},edit=null,mM=4,mA=4,mN=4,gen=new Set(),noGen=false,nid=1;
 const pd=s=>{const[y,m,d]=s.split('-').map(Number);return new Date(y,m-1,d)};
 const ts=d=>d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
 const br=s=>s?s.split('-').reverse().join('/'):'--';
@@ -114,9 +114,10 @@ let left=u.total,cur=pd(from),n=0;const phs=u.ph.filter(p=>p.d).sort((a,b)=>a.d.
 while(left>0&&n++<4000){const ds=ts(cur),dw=cur.getDay();addDef(cur.getFullYear());
 let days=u.days;for(const p of phs)if(ds>=p.d)days=p.days;
 const h=hol.get(ds);
-if(days.includes(dw)&&!(h&&(h.t==='feriado'||!u.ign))){const s=sch[ds]||(sch[ds]={m:0,a:0,u:[]});let c=0;const fm=mM-s.m,fa=mA-s.a;
+if(days.includes(dw)&&!(h&&(h.t==='feriado'||!u.ign))){const s=sch[ds]||(sch[ds]={m:0,a:0,n:0,u:[]});let c=0;const fm=mM-s.m,fa=mA-s.a;
 if(u.shift==='Manhã'){c=Math.min(u.daily,fm,left);s.m+=c}
 else if(u.shift==='Tarde'){c=Math.min(u.daily,fa,left);s.a+=c}
+else if(u.shift==='Noturno'){c=Math.min(u.daily,mN-s.n,left);s.n+=c}
 else{c=Math.min(u.daily,fm+fa,left);const tm=Math.min(c,fm);s.m+=tm;s.a+=c-tm}
 if(c>0){s.u.push({n:u.name,h:c,c:u.color,sh:u.shift});left-=c;u.s=u.s||ds;u.e=ds}}
 cur.setDate(cur.getDate()+1)}
@@ -165,7 +166,7 @@ function rm(id){if(edit===id)resetForm();ucs=ucs.filter(u=>u.id!==id);refresh()}
 function mv(i,d){const j=i+d;if(j<0||j>=ucs.length)return;[ucs[i],ucs[j]]=[ucs[j],ucs[i]];refresh()}
 function bRow(n='',h=''){const L=$('brows').lastElementChild,days=L?getDays(L.querySelector('.dys')):getDays($('bdef')),sh=L?L.querySelector('.bs').value:$('bsh').value,dl=L?L.querySelector('.bd').value:$('bdl').value;
 const r=document.createElement('div');r.className='brow';
-r.innerHTML=`<div class="g2" style="grid-template-columns:1fr 70px auto"><input class="bn" placeholder="Nome da UC" value="${esc(n)}"><input class="bh" type="number" placeholder="Horas" value="${h}"><button class="ib" onclick="this.closest('.brow').remove()">×</button></div><div class="bl">${dayHtml(days)}<select class="bs"><option>Manhã</option><option>Tarde</option><option>Integral</option></select><input class="bd" type="number" title="Horas por dia" value="${dl}"></div>`;
+r.innerHTML=`<div class="g2" style="grid-template-columns:1fr 70px auto"><input class="bn" placeholder="Nome da UC" value="${esc(n)}"><input class="bh" type="number" placeholder="Horas" value="${h}"><button class="ib" onclick="this.closest('.brow').remove()">×</button></div><div class="bl">${dayHtml(days)}<select class="bs"><option>Manhã</option><option>Tarde</option><option>Integral</option><option>Noturno</option></select><input class="bd" type="number" title="Horas por dia" value="${dl}"></div>`;
 $('brows').appendChild(r);r.querySelector('.bs').value=sh;return r}
 function bAll(){const d=getDays($('bdef'));document.querySelectorAll('#brows .brow').forEach(r=>{r.querySelectorAll('.dys input').forEach(i=>i.checked=d.includes(+i.value));r.querySelector('.bs').value=$('bsh').value;r.querySelector('.bd').value=$('bdl').value})}
 function bPaste(){let n=0;$('bt').value.split('\n').forEach(l=>{const m=l.trim().match(/^(.+?)[\s;,|:\t–-]+(\d+)\s*(?:h|horas)?$/i);if(m){bRow(m[1].trim(),m[2]);n++}});if(!n)return alert('Nenhuma linha reconhecida. Use: nome da UC, separador e horas.');$('bt').value=''}
@@ -174,14 +175,14 @@ if(!name||!(total>0)||!days.length||!(daily>0))return;
 ucs.push({id:'u'+nid++,name,total,daily,shift:r.querySelector('.bs').value,prof:$('bdp').value,color:rc(),ign:false,days,mode:'seq',fix:'',ph:[]});r.remove();n++});
 if(!n)return alert('Preencha nome, horas, dias da semana e carga diária de ao menos uma linha.');if(!$('brows').children.length)bRow();refresh();alert(n+' UC(s) adicionada(s) ao calendário.')}
 function pdf(){const n=$('cn').value,h=$('ch').value;$('pt').textContent=n?'Cronograma: '+n:'Cronograma do curso';$('pp').textContent=(h?'Carga horária total: '+h+'h · ':'')+'SENAI · Gerado em '+new Date().toLocaleDateString('pt-BR');window.print()}
-function newDoc(){ins=[];ucs=[];hol.clear();gen.clear();noGen=false;mM=mA=4;['cn','ch','start'].forEach(i=>$(i).value='');$('mm').value=$('ma').value=4;for(let y=2026;y<=2032;y++)addDef(y);$('mode').value='seq';$('fixw').hidden=true;resetForm();rI();rH();refresh()}
+function newDoc(){ins=[];ucs=[];hol.clear();gen.clear();noGen=false;mM=mA=mN=4;['cn','ch','start'].forEach(i=>$(i).value='');$('mm').value=$('ma').value=$('mn').value=4;for(let y=2026;y<=2032;y++)addDef(y);$('mode').value='seq';$('fixw').hidden=true;resetForm();rI();rH();refresh()}
 function exp(){if(typeof XLSX==='undefined')return alert('A biblioteca de Excel não carregou.');const wb=XLSX.utils.book_new(),A=(n,r)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),n);
-A('Configurações',[{NomeCurso:$('cn').value,CargaTotalPrevista:$('ch').value,DataInicio:$('start').value,MaxManha:mM,MaxTarde:mA}]);
+A('Configurações',[{NomeCurso:$('cn').value,CargaTotalPrevista:$('ch').value,DataInicio:$('start').value,MaxManha:mM,MaxTarde:mA,MaxNoite:mN}]);
 A('Instrutores',ins.map(Nome=>({Nome})));A('Feriados',[...hol.entries()].sort((a,b)=>a[0].localeCompare(b[0])).map(([Data,o])=>({Data,Nome:o.n,Tipo:o.t})));
 A('UnidadesCurriculares',ucs.map(u=>({Nome:u.name,CargaTotal:u.total,CargaDiaria:u.daily,Turno:u.shift,Professor:u.prof,Cor:u.color,IgnorarFerias:u.ign?'Sim':'Não',DiasSemana:u.days.join(','),ModoInicio:u.mode,DataFixa:u.fix,Fases:u.ph.map(p=>p.d+':'+p.days.join(',')).join('|')})));
 XLSX.writeFile(wb,'cronograma_curso.xlsx')}
 function imp(ev){const f=ev.target.files[0];if(!f)return;const r=new FileReader();r.onload=e=>{try{const wb=XLSX.read(new Uint8Array(e.target.result),{type:'array'}),sj=n=>wb.Sheets[n]?XLSX.utils.sheet_to_json(wb.Sheets[n]):null;
-const c=(sj('Configurações')||[])[0];if(c){$('cn').value=c.NomeCurso||'';$('ch').value=c.CargaTotalPrevista||'';$('start').value=c.DataInicio||'';mM=+c.MaxManha||4;mA=+c.MaxTarde||4;$('mm').value=mM;$('ma').value=mA}
+const c=(sj('Configurações')||[])[0];if(c){$('cn').value=c.NomeCurso||'';$('ch').value=c.CargaTotalPrevista||'';$('start').value=c.DataInicio||'';mM=+c.MaxManha||4;mA=+c.MaxTarde||4;mN=+c.MaxNoite||4;$('mm').value=mM;$('ma').value=mA;$('mn').value=mN}
 const I=sj('Instrutores');ins=I?I.map(i=>i.Nome).filter(Boolean):[];
 const H=sj('Feriados');if(H){hol.clear();noGen=true;H.forEach(h=>h.Data&&hol.set(h.Data,{n:h.Nome||'Feriado',t:h.Tipo||'feriado'}))}
 const U=sj('UnidadesCurriculares');if(U)ucs=U.map(u=>{const ph=String(u.Fases||'').split('|').filter(Boolean).map(x=>{const[d,z]=x.split(':');return{d,days:(z||'').split(',').map(Number)}});
@@ -193,10 +194,10 @@ for(let y=2026;y<=2032;y++)addDef(y);
 const API='/api/calendars';
 async function cLoad(){try{const r=await fetch(API);if(!r.ok)throw 0;const l=await r.json();$('cs').innerHTML=l.map(x=>`<option value="${esc(x.id)}">${esc(x.id)} (${new Date(x.atualizado).toLocaleDateString('pt-BR')})</option>`).join('')||'<option value="">Nenhum salvo</option>'}catch(e){$('cs').innerHTML='<option value="">Nuvem indisponível</option>'}}
 async function cOpen(){const id=$('cs').value;if(!id)return;try{const r=await fetch(API+'?id='+encodeURIComponent(id));if(!r.ok)throw 0;const d=await r.json();
-$('cn').value=d.cn||'';$('ch').value=d.ch||'';$('start').value=d.start||'';mM=+d.mM||4;mA=+d.mA||4;$('mm').value=mM;$('ma').value=mA;ins=d.ins||[];
+$('cn').value=d.cn||'';$('ch').value=d.ch||'';$('start').value=d.start||'';mM=+d.mM||4;mA=+d.mA||4;mN=+d.mN||4;$('mm').value=mM;$('ma').value=mA;$('mn').value=mN;ins=d.ins||[];
 hol=new Map(d.hol||[]);noGen=true;ucs=(d.ucs||[]).map(u=>({...u,id:'u'+nid++}));$('cname').value=id;resetForm();rI();rH();refresh();alert('Calendário aberto.')}catch(e){alert('Não foi possível abrir.')}}
 async function cSave(){const nome=$('cname').value.trim()||$('cn').value.trim();if(!nome)return alert('Dê um nome ao calendário.');
-try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-senha':$('cpw').value},body:JSON.stringify({nome,dados:{cn:$('cn').value,ch:$('ch').value,start:$('start').value,mM,mA,ins,hol:[...hol.entries()],ucs}})});
+try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-senha':$('cpw').value},body:JSON.stringify({nome,dados:{cn:$('cn').value,ch:$('ch').value,start:$('start').value,mM,mA,mN,ins,hol:[...hol.entries()],ucs}})});
 const j=await r.json();if(!r.ok)return alert(j.erro||'Erro ao salvar.');alert('Salvo na nuvem como "'+j.id+'".');$('cname').value=j.id;cLoad()}catch(e){alert('Erro ao salvar.')}}
 async function cDel(){const id=$('cs').value;if(!id)return;try{const r=await fetch(API+'?id='+encodeURIComponent(id),{method:'DELETE',headers:{'x-senha':$('cpw').value}});const j=await r.json();if(!r.ok)return alert(j.erro||'Erro ao excluir.');alert('Excluído.');cLoad()}catch(e){alert('Erro ao excluir.')}}
 $('dmain').innerHTML=dayHtml([1,2,3,4,5]);$('bdef').innerHTML=dayHtml([1,2,3,4,5]);bRow();$('brows').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('bh')){e.preventDefault();bRow().querySelector('.bn').focus()}});
