@@ -30,6 +30,7 @@ button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(-
 .dys{display:flex;gap:2px;margin:3px 0 8px}.dys label{flex:1;margin:0}.dys input{display:none}
 .dys span{display:block;text-align:center;font-size:10px;font-weight:700;padding:6px 0;border:1px solid var(--bd);border-radius:4px;cursor:pointer;color:var(--mu)}
 .dys input:checked+span{background:var(--ac);color:#fff;border-color:var(--ac)}
+.brow{border:1px solid var(--bd);border-radius:8px;padding:6px;margin-bottom:6px}.bl{display:flex;gap:4px;align-items:center;margin-top:5px}.bl .dys{flex:1;margin:0}.bl select{width:80px;margin:0}.bl input{width:48px;margin:0}.brow .dys span,.cd .dys span{padding:4px 0;font-size:9px}.cd .dys{margin:6px 0 0}summary{cursor:pointer;font-weight:600}
 .phr{border:1px dashed var(--bd);border-radius:8px;padding:6px;margin-bottom:6px}
 .uc{border:1px solid var(--bd);border-radius:8px;padding:8px 8px 8px 10px;margin-top:8px}.uc .r{display:flex;justify-content:space-between;gap:6px}
 .uc small{display:block;color:var(--mu);margin-top:2px}.dt{background:var(--bg);border-radius:6px;padding:4px 8px;margin-top:5px;font-size:12px;display:flex;justify-content:space-between}
@@ -69,11 +70,14 @@ button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(-
 <div class="g2"><label>De<input id="hs" type="date"></label><label>Até (opcional)<input id="he" type="date"></label></div>
 <button onclick="addH()" style="width:100%;margin-bottom:8px">Adicionar data/período</button><div id="hl" class="hl"></div></div>
 <div class="card"><h2>Unidades curriculares <span class="badge" id="tot"></span></h2>
-<details style="margin-bottom:10px"><summary style="cursor:pointer;font-weight:600">Colar o plano de curso (nome + horas)</summary>
-<textarea id="bt" rows="5" placeholder="Uma UC por linha, ex.:&#10;Eletricidade Básica; 80&#10;Segurança do Trabalho 40"></textarea>
-<small class="mu">Usa turno, carga diária, dias e instrutor do formulário abaixo, na ordem da lista.</small>
-<button class="pri" onclick="bulkAdd()" style="width:100%;margin-top:6px">Adicionar todas</button></details>
-<div id="form"><label>Nome da UC<input id="un"></label>
+<details open><summary>Adicionar várias UCs de uma vez</summary><div style="margin-top:8px">
+<label style="margin-bottom:2px">Dias padrão das linhas</label><div id="bdef"></div>
+<div class="g3"><label>Diária (h)<input id="bdl" type="number" value="4"></label><label>Turno<select id="bsh"><option>Manhã</option><option>Tarde</option><option>Integral</option></select></label><label>Instrutor<select id="bdp"></select></label></div>
+<button style="width:100%;margin-bottom:8px" onclick="bAll()">Aplicar padrão a todas as linhas</button>
+<details style="margin-bottom:8px"><summary>Colar lista (nome + horas)</summary><textarea id="bt" rows="4" placeholder="Eletricidade Básica; 80&#10;Segurança do Trabalho 40"></textarea><button onclick="bPaste()" style="width:100%;margin-top:4px">Gerar linhas</button></details>
+<div id="brows"></div>
+<div class="bar"><button onclick="bRow().querySelector('.bn').focus()">+ Linha</button><button class="pri" style="flex:1" onclick="bAdd()">Adicionar ao calendário</button></div></div></details>
+<details id="fd" style="margin-top:12px"><summary>Adicionar ou editar uma UC (todas as opções)</summary><div id="form" style="margin-top:8px"><label>Nome da UC<input id="un"></label>
 <div class="g3"><label>Total (h)<input id="ut" type="number"></label><label>Diária (h)<input id="ud" type="number" value="4"></label><label>Turno<select id="us"><option>Manhã</option><option>Tarde</option><option>Integral</option></select></label></div>
 <label style="margin:0">Dias da semana</label><div id="dmain"></div>
 <div class="g2"><label>Início desta UC<select id="mode" onchange="$('fixw').hidden=this.value!='fix'"><option value="seq">Logo após a anterior</option><option value="par">Junto com a anterior</option><option value="fix">Data fixa</option></select></label>
@@ -81,7 +85,7 @@ button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(-
 <label style="display:flex;justify-content:space-between;align-items:center">Mudar dias a partir de uma data<button class="ib" onclick="addPh()">+ Fase</button></label><div id="ph"></div>
 <div class="g2" style="grid-template-columns:1fr 70px"><label>Instrutor<select id="up"></select></label><label>Cor<input id="uk" type="color"></label></div>
 <label style="display:flex;align-items:center;text-transform:none;font-size:12px"><input id="ui" type="checkbox">Ignorar férias (prática profissional)</label>
-<div class="bar"><button id="sv" class="pri" style="flex:1" onclick="saveUC()">Adicionar UC</button><button id="cx" hidden onclick="resetForm()">Cancelar</button></div></div>
+<div class="bar"><button id="sv" class="pri" style="flex:1" onclick="saveUC()">Adicionar UC</button><button id="cx" hidden onclick="resetForm()">Cancelar</button></div></div></details>
 <div id="ul"></div></div></aside>
 <main><div class="pr"><h1 id="pt"></h1><p id="pp" class="mu"></p></div>
 <div class="card"><h2>Calendário de execução <span class="badge" id="sum"></span></h2><div id="cal" class="months"></div></div>
@@ -134,12 +138,12 @@ let y=+a.slice(0,4),m=+a.slice(5,7)-1;const ey=+b.slice(0,4),em=+b.slice(5,7)-1;
 while(y<ey||(y===ey&&m<=em)){h+=month(y,m);if(++m>11){m=0;y++}}
 el.innerHTML=h;const meta=+$('ch').value;$('sum').textContent='Término previsto: '+br(b)+(meta?` · ${ucs.reduce((s,u)=>s+u.total,0)}h de ${meta}h`:'')}
 function rUC(){$('ul').innerHTML=ucs.map((u,i)=>`<div class="uc" style="border-left:6px solid ${u.color}"><div class="r"><b>${esc(u.name)}</b><span><button class="ib" onclick="mv(${i},-1)">▲</button><button class="ib" onclick="mv(${i},1)">▼</button><button class="ib" onclick="ed('${u.id}')">✎</button><button class="ib" onclick="ask(this,()=>rm('${u.id}'))">✕</button></span></div>
-<small>${u.prof?esc(u.prof)+' • ':''}${u.total}h • ${u.daily}h/dia • ${u.shift} • ${u.days.map(d=>DN[d]).join(' ')}${u.mode==='par'?' • junto com a anterior':u.mode==='fix'?' • data fixa':''}${u.ph.length?' • '+u.ph.length+' mudança(s) de dias':''}${u.ign?' • ignora férias':''}</small>
+<small>${u.prof?esc(u.prof)+' • ':''}${u.total}h • ${u.daily}h/dia • ${u.shift}${u.mode==='par'?' • junto com a anterior':u.mode==='fix'?' • data fixa':''}${u.ph.length?' • '+u.ph.length+' mudança(s) de dias':''}${u.ign?' • ignora férias':''}</small><div class="cd" data-id="${u.id}">${dayHtml(u.days)}</div>
 ${u.err?`<div class="er">${u.err}</div>`:''}${u.s?`<div class="dt"><span>Início <b>${br(u.s)}</b></span><span>Fim <b>${br(u.e)}</b></span></div>`:''}</div>`).join('')}
 function rSum(){$('isum').innerHTML=ins.length?ins.map(p=>{const l=ucs.filter(u=>u.prof===p);return `<div class="ic"><b>${esc(p)}<span class="badge">${l.length} UCs</span></b>${l.length?l.map(u=>`<div><span style="color:var(--tx);font-weight:600"><span><i style="display:inline-block;width:9px;height:9px;border-radius:50%;background:${u.color};margin-right:6px"></i>${esc(u.name)}</span><span>${u.total}h</span></span><span><span>${u.s?br(u.s)+' a '+br(u.e):'sem agenda'}</span><span>${u.shift}</span></span></div>`).join(''):'<div class="mu">Sem UCs atribuídas.</div>'}</div>`}).join(''):'<p class="mu">Nenhum instrutor cadastrado.</p>'}
 function addI(){const v=$('in').value.trim();if(v&&!ins.includes(v)){ins.push(v);$('in').value='';rI()}}
 function rmI(i){ins.splice(i,1);rI()}
-function rI(){$('il').innerHTML=ins.map((p,i)=>`<span class="chip">${esc(p)}<button onclick="rmI(${i})">×</button></span>`).join('');const s=$('up'),v=s.value;s.innerHTML='<option value="">Sem instrutor</option>'+ins.map(p=>`<option>${esc(p)}</option>`).join('');if(ins.includes(v))s.value=v;rSum()}
+function rI(){$('il').innerHTML=ins.map((p,i)=>`<span class="chip">${esc(p)}<button onclick="rmI(${i})">×</button></span>`).join('');const s=$('up'),v=s.value;s.innerHTML='<option value="">Sem instrutor</option>'+ins.map(p=>`<option>${esc(p)}</option>`).join('');const b=$('bdp'),bv=b.value;b.innerHTML=s.innerHTML;if(ins.includes(bv))b.value=bv;if(ins.includes(v))s.value=v;rSum()}
 function addH(){const t=$('ht').value,s=$('hs').value,e=$('he').value,n=$('hn').value.trim()||(t==='feriado'?'Feriado':'Férias');if(!s)return alert('Informe a data inicial.');
 const c=pd(s),f=e?pd(e):pd(s);if(f<c)return alert('Data final inválida.');for(;c<=f;c.setDate(c.getDate()+1))hol.set(ts(c),{n,t});$('hs').value=$('he').value=$('hn').value='';rH();refresh()}
 function rmH(a,b){const c=pd(a),f=pd(b);for(;c<=f;c.setDate(c.getDate()+1))hol.delete(ts(c));rH();refresh()}
@@ -156,12 +160,19 @@ const o={name,total,daily,shift:$('us').value,prof:$('up').value,color:$('uk').v
 if(edit)Object.assign(ucs.find(u=>u.id===edit),o);else ucs.push({id:'u'+nid++,...o});resetForm();refresh()}
 function ed(id){const u=ucs.find(x=>x.id===id);if(!u)return;edit=id;$('un').value=u.name;$('ut').value=u.total;$('ud').value=u.daily;$('us').value=u.shift;$('up').value=u.prof;$('uk').value=u.color;$('ui').checked=u.ign;
 $('dmain').innerHTML=dayHtml(u.days);$('mode').value=u.mode;$('fix').value=u.fix||'';$('fixw').hidden=u.mode!=='fix';$('ph').innerHTML='';u.ph.forEach(p=>addPh(p.d,p.days));
-$('sv').textContent='Salvar alterações';$('cx').hidden=false;$('form').scrollIntoView({behavior:'smooth',block:'center'})}
+$('sv').textContent='Salvar alterações';$('cx').hidden=false;$('fd').open=true;$('form').scrollIntoView({behavior:'smooth',block:'center'})}
 function rm(id){if(edit===id)resetForm();ucs=ucs.filter(u=>u.id!==id);refresh()}
 function mv(i,d){const j=i+d;if(j<0||j>=ucs.length)return;[ucs[i],ucs[j]]=[ucs[j],ucs[i]];refresh()}
-function bulkAdd(){const days=getDays($('dmain')),daily=+$('ud').value;if(!days.length||!(daily>0))return alert('Marque os dias da semana e a carga diária no formulário.');let n=0;
-$('bt').value.split('\n').forEach(l=>{const m=l.trim().match(/^(.+?)[\s;,|:\t–-]+(\d+)\s*(?:h|horas)?$/i);if(m){ucs.push({id:'u'+nid++,name:m[1].trim(),total:+m[2],daily,shift:$('us').value,prof:$('up').value,color:rc(),ign:false,days:[...days],mode:'seq',fix:'',ph:[]});n++}});
-if(!n)return alert('Nenhuma linha reconhecida. Use: nome da UC, separador e horas.');$('bt').value='';refresh()}
+function bRow(n='',h=''){const L=$('brows').lastElementChild,days=L?getDays(L.querySelector('.dys')):getDays($('bdef')),sh=L?L.querySelector('.bs').value:$('bsh').value,dl=L?L.querySelector('.bd').value:$('bdl').value;
+const r=document.createElement('div');r.className='brow';
+r.innerHTML=`<div class="g2" style="grid-template-columns:1fr 70px auto"><input class="bn" placeholder="Nome da UC" value="${esc(n)}"><input class="bh" type="number" placeholder="Horas" value="${h}"><button class="ib" onclick="this.closest('.brow').remove()">×</button></div><div class="bl">${dayHtml(days)}<select class="bs"><option>Manhã</option><option>Tarde</option><option>Integral</option></select><input class="bd" type="number" title="Horas por dia" value="${dl}"></div>`;
+$('brows').appendChild(r);r.querySelector('.bs').value=sh;return r}
+function bAll(){const d=getDays($('bdef'));document.querySelectorAll('#brows .brow').forEach(r=>{r.querySelectorAll('.dys input').forEach(i=>i.checked=d.includes(+i.value));r.querySelector('.bs').value=$('bsh').value;r.querySelector('.bd').value=$('bdl').value})}
+function bPaste(){let n=0;$('bt').value.split('\n').forEach(l=>{const m=l.trim().match(/^(.+?)[\s;,|:\t–-]+(\d+)\s*(?:h|horas)?$/i);if(m){bRow(m[1].trim(),m[2]);n++}});if(!n)return alert('Nenhuma linha reconhecida. Use: nome da UC, separador e horas.');$('bt').value=''}
+function bAdd(){let n=0;document.querySelectorAll('#brows .brow').forEach(r=>{const name=r.querySelector('.bn').value.trim(),total=+r.querySelector('.bh').value,days=getDays(r.querySelector('.dys')),daily=+r.querySelector('.bd').value;
+if(!name||!(total>0)||!days.length||!(daily>0))return;
+ucs.push({id:'u'+nid++,name,total,daily,shift:r.querySelector('.bs').value,prof:$('bdp').value,color:rc(),ign:false,days,mode:'seq',fix:'',ph:[]});r.remove();n++});
+if(!n)return alert('Preencha nome, horas, dias da semana e carga diária de ao menos uma linha.');if(!$('brows').children.length)bRow();refresh();alert(n+' UC(s) adicionada(s) ao calendário.')}
 function pdf(){const n=$('cn').value,h=$('ch').value;$('pt').textContent=n?'Cronograma: '+n:'Cronograma do curso';$('pp').textContent=(h?'Carga horária total: '+h+'h · ':'')+'SENAI · Gerado em '+new Date().toLocaleDateString('pt-BR');window.print()}
 function newDoc(){ins=[];ucs=[];hol.clear();gen.clear();noGen=false;mM=mA=4;['cn','ch','start'].forEach(i=>$(i).value='');$('mm').value=$('ma').value=4;for(let y=2026;y<=2032;y++)addDef(y);$('mode').value='seq';$('fixw').hidden=true;resetForm();rI();rH();refresh()}
 function exp(){if(typeof XLSX==='undefined')return alert('A biblioteca de Excel não carregou.');const wb=XLSX.utils.book_new(),A=(n,r)=>XLSX.utils.book_append_sheet(wb,XLSX.utils.json_to_sheet(r),n);
@@ -188,5 +199,6 @@ async function cSave(){const nome=$('cname').value.trim()||$('cn').value.trim();
 try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-senha':$('cpw').value},body:JSON.stringify({nome,dados:{cn:$('cn').value,ch:$('ch').value,start:$('start').value,mM,mA,ins,hol:[...hol.entries()],ucs}})});
 const j=await r.json();if(!r.ok)return alert(j.erro||'Erro ao salvar.');alert('Salvo na nuvem como "'+j.id+'".');$('cname').value=j.id;cLoad()}catch(e){alert('Erro ao salvar.')}}
 async function cDel(){const id=$('cs').value;if(!id)return;try{const r=await fetch(API+'?id='+encodeURIComponent(id),{method:'DELETE',headers:{'x-senha':$('cpw').value}});const j=await r.json();if(!r.ok)return alert(j.erro||'Erro ao excluir.');alert('Excluído.');cLoad()}catch(e){alert('Erro ao excluir.')}}
-$('dmain').innerHTML=dayHtml([1,2,3,4,5]);$('uk').value=rc();rI();rH();refresh();cLoad();
+$('dmain').innerHTML=dayHtml([1,2,3,4,5]);$('bdef').innerHTML=dayHtml([1,2,3,4,5]);bRow();$('brows').addEventListener('keydown',e=>{if(e.key==='Enter'&&e.target.classList.contains('bh')){e.preventDefault();bRow().querySelector('.bn').focus()}});
+document.addEventListener('change',e=>{const c=e.target.closest('.cd');if(!c)return;const u=ucs.find(x=>x.id===c.dataset.id),d=getDays(c);if(!u)return;if(!d.length){e.target.checked=true;return alert('Marque ao menos um dia.')}u.days=d;refresh()});$('uk').value=rc();rI();rH();refresh();cLoad();
 </script></body></html>
