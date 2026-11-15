@@ -53,6 +53,12 @@ button:hover{border-color:var(--ac)}.pri{background:var(--ac);border-color:var(-
 <button onclick="ask(this,newDoc)">Novo</button><input type="file" id="fu" accept=".xlsx" hidden onchange="imp(event)">
 <button onclick="$('fu').click()">Abrir Excel</button><button onclick="exp()">Salvar Excel</button><button onclick="pdf()">Exportar PDF</button></div></header>
 <div class="cols"><aside class="np">
+<div class="card"><h2>Nuvem <button class="ib" onclick="cLoad()">↻</button></h2>
+<select id="cs"></select>
+<div class="bar" style="margin:6px 0 10px"><button onclick="cOpen()">Abrir</button><button onclick="ask(this,cDel)">Excluir</button></div>
+<label>Salvar como<input id="cname" placeholder="Nome do calendário"></label>
+<label>Senha de edição<input id="cpw" type="password"></label>
+<button class="pri" style="width:100%" onclick="cSave()">Salvar na nuvem</button></div>
 <div class="card"><h2>Curso</h2>
 <label>Nome do curso<input id="cn" placeholder="Ex: Eletrotécnica"></label>
 <div class="g2"><label>Carga prevista (h)<input id="ch" type="number"></label><label>Data de início do curso<input id="start" type="date" onchange="refresh()"></label></div>
@@ -173,5 +179,14 @@ if(u.ModoInicio){o.mode=u.ModoInicio;o.fix=u.DataFixa||'';o.days=String(u.DiasSe
 else{const p=ph.shift()||{d:'',days:[1,2,3,4,5]};o.mode='fix';o.fix=p.d;o.days=p.days;o.ph=ph}return o});
 resetForm();rI();rH();refresh();alert('Cronograma importado!')}catch(x){alert('Erro ao ler o arquivo Excel.');console.error(x)}$('fu').value=''};r.readAsArrayBuffer(f)}
 for(let y=2026;y<=2032;y++)addDef(y);
-$('dmain').innerHTML=dayHtml([1,2,3,4,5]);$('uk').value=rc();rI();rH();refresh();
+const API='/api/calendars';
+async function cLoad(){try{const r=await fetch(API);if(!r.ok)throw 0;const l=await r.json();$('cs').innerHTML=l.map(x=>`<option value="${esc(x.id)}">${esc(x.id)} (${new Date(x.atualizado).toLocaleDateString('pt-BR')})</option>`).join('')||'<option value="">Nenhum salvo</option>'}catch(e){$('cs').innerHTML='<option value="">Nuvem indisponível</option>'}}
+async function cOpen(){const id=$('cs').value;if(!id)return;try{const r=await fetch(API+'?id='+encodeURIComponent(id));if(!r.ok)throw 0;const d=await r.json();
+$('cn').value=d.cn||'';$('ch').value=d.ch||'';$('start').value=d.start||'';mM=+d.mM||4;mA=+d.mA||4;$('mm').value=mM;$('ma').value=mA;ins=d.ins||[];
+hol=new Map(d.hol||[]);noGen=true;ucs=(d.ucs||[]).map(u=>({...u,id:'u'+nid++}));$('cname').value=id;resetForm();rI();rH();refresh();alert('Calendário aberto.')}catch(e){alert('Não foi possível abrir.')}}
+async function cSave(){const nome=$('cname').value.trim()||$('cn').value.trim();if(!nome)return alert('Dê um nome ao calendário.');
+try{const r=await fetch(API,{method:'POST',headers:{'Content-Type':'application/json','x-senha':$('cpw').value},body:JSON.stringify({nome,dados:{cn:$('cn').value,ch:$('ch').value,start:$('start').value,mM,mA,ins,hol:[...hol.entries()],ucs}})});
+const j=await r.json();if(!r.ok)return alert(j.erro||'Erro ao salvar.');alert('Salvo na nuvem como "'+j.id+'".');$('cname').value=j.id;cLoad()}catch(e){alert('Erro ao salvar.')}}
+async function cDel(){const id=$('cs').value;if(!id)return;try{const r=await fetch(API+'?id='+encodeURIComponent(id),{method:'DELETE',headers:{'x-senha':$('cpw').value}});const j=await r.json();if(!r.ok)return alert(j.erro||'Erro ao excluir.');alert('Excluído.');cLoad()}catch(e){alert('Erro ao excluir.')}}
+$('dmain').innerHTML=dayHtml([1,2,3,4,5]);$('uk').value=rc();rI();rH();refresh();cLoad();
 </script></body></html>
